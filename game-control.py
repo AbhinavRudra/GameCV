@@ -87,7 +87,7 @@ while True:
                     hold_key('s')
                     release_key('s')
 
-            if hand_label == "Right":
+            elif hand_label == "Right":
                 right_fingers = totalFingers
                 cv2.putText(img, f'Right: {totalFingers}', (50, 100),
                             cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
@@ -103,9 +103,13 @@ while True:
                     release_key(Key.left)
                     release_key(Key.right)
 
-            if hand_label == "Right" and hand_label == "Left":
-                hold_key(Key.space)
-                release_key(Key.space)
+            elif hand_label == "Right" and hand_label == "Left":
+                if left_fingers == 5 and right_fingers == 5:
+                    hold_key(Key.space)
+                    release_key(Key.space)
+                elif left_fingers == 0 and right_fingers == 0:
+                    hold_key(Key.esc)
+                    release_key(Key.esc)
 
     else:
         # No hands detected → release all keys
