@@ -1,20 +1,20 @@
 import cv2
-from cvzone.HandTrackingModule import HandDetector
-import pyautogui
+import mediapipe as mp
+from pynput.keyboard import Controller, Key
 
-# Track pressed keys to release them later
+keyboard = Controller()
 pressed_keys = set()
 
 def hold_key(key):
     """Press and hold a key (if not already held)."""
     if key not in pressed_keys:
-        pyautogui.keyDown(key)
+        keyboard.press(key)
         pressed_keys.add(key)
 
 def release_key(key):
     """Release a key (if currently held)."""
     if key in pressed_keys:
-        pyautogui.keyUp(key)
+        keyboard.release(key)
         pressed_keys.remove(key)
 
 def release_all():
@@ -22,69 +22,90 @@ def release_all():
     for key in list(pressed_keys):
         release_key(key)
 
-detector = HandDetector(detectionCon=0.7, maxHands=2)
+# MediaPipe hands setup
+mp_hands = mp.solutions.hands
+mp_draw = mp.solutions.drawing_utils
+
+hands = mp_hands.Hands(
+    max_num_hands=2,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+
 cap = cv2.VideoCapture(0)
-cap.set(3, 640)
-cap.set(4, 480)
+cap.set(3, 420)
+cap.set(4, 340)
+
+def fingers_up(hand_landmarks, hand_label):
+    """Return a list of 5 values (0 or 1) for Thumb, Index, Middle, Ring, Pinky"""
+    tip_ids = [4, 8, 12, 16, 20]
+    fingers = []
+
+    # Thumb
+    if hand_label == "Right":
+        fingers.append(1 if hand_landmarks.landmark[tip_ids[0]].x > hand_landmarks.landmark[tip_ids[0] - 1].x else 0)
+    else:
+        fingers.append(1 if hand_landmarks.landmark[tip_ids[0]].x < hand_landmarks.landmark[tip_ids[0] - 1].x else 0)
+
+    # Other fingers
+    for id in range(1, 5):
+        fingers.append(1 if hand_landmarks.landmark[tip_ids[id]].y < hand_landmarks.landmark[tip_ids[id] - 2].y else 0)
+
+    return fingers
 
 while True:
     success, img = cap.read()
-    img = cv2.flip(img, 1)
-    hands, img = detector.findHands(img)
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = hands.process(img_rgb)
 
     left_fingers = 0
     right_fingers = 0
 
-    if hands:
-        for hand in hands:
-            fingers = detector.fingersUp(hand)
+    if results.multi_hand_landmarks and results.multi_handedness:
+        for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+            hand_label = handedness.classification[0].label  # "Left" or "Right"
+            fingers = fingers_up(hand_landmarks, hand_label)
             totalFingers = fingers.count(1)
-            hand_type = hand["type"]
 
-            if hand_type == "Left":
+            mp_draw.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+            if hand_label == "Left":
                 left_fingers = totalFingers
                 cv2.putText(img, f'Left: {totalFingers}', (50, 50),
                             cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
 
                 # Left hand: Forward, Drift, Brake
-                if totalFingers == 5:       # Forward
-                    hold_key('up')
-                else:
-                    release_key('up')
-                if totalFingers == 0:       # Brake
-                    hold_key('down')
-                else:
-                    release_key('down')
+                if totalFingers == 5:  # Forward
+                    hold_key(Key.up)
+                    release_key(Key.up)
 
-                if totalFingers == 3:       # Drift (same as left hand)
-                    pyautogui.hotkey('s','d')
-                
+                elif totalFingers == 4:  # Brake
+                    hold_key(Key.down)
+                    release_key(Key.down)
 
-            if hand_type == "Right":
+                elif totalFingers == 3:  # Drift
+                    hold_key('s')
+                    release_key('s')
+
+            if hand_label == "Right":
                 right_fingers = totalFingers
                 cv2.putText(img, f'Right: {totalFingers}', (50, 100),
                             cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
 
-                # Right hand: Left /Right
-                if totalFingers == 1:       # Left turn
-                    hold_key('left')
+                # Right hand: Left / Right
+                if totalFingers == 4:
+                    hold_key(Key.left)
+                    release_key(Key.right)
+                elif totalFingers == 5:
+                    hold_key(Key.right)
+                    release_key(Key.left)
                 else:
-                    release_key('left')
+                    release_key(Key.left)
+                    release_key(Key.right)
 
-                if totalFingers == 2:       # Right turn
-                    hold_key('right')
-                else:
-                    release_key('right')
-
-
-        # Both hands closed (0 fingers) = Pause
-        if left_fingers == 5 and right_fingers == 5:
-            pyautogui.press('escape')
-        # if left_fingers == 0 and right_fingers == 0:
-        #     pyautogui.press('space')
-        #     pyautogui.press('space')
-        
-        
+            if hand_label == "Right" and hand_label == "Left":
+                hold_key(Key.space)
+                release_key(Key.space)
 
     else:
         # No hands detected → release all keys
