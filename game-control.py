@@ -114,11 +114,11 @@ while True:
         if left_fingers == 5:  # Forward
             hold_key(Key.up)
             action_text += "Forward "
-        elif left_fingers == 4:  # Brake
+        elif left_fingers == 2:  # Brake
             hold_key(Key.down)
             action_text += "Brake "
-        elif left_fingers == 3:  # Drift
-            hold_key(Key.down)
+        elif left_fingers == 0:  # Drift
+            hold_key('s')
             action_text += "Drift "
         else:
             # Left hand detected but no matching gesture - release left hand keys
@@ -133,11 +133,11 @@ while True:
 
     # Right hand controls: Left/Right steering
     if hands_detected["Right"] and right_fingers is not None:
-        if right_fingers == 4:  # Turn left
+        if right_fingers == 2:  # Turn left
             hold_key(Key.left)
             release_key(Key.right)
             action_text += "Left "
-        elif right_fingers == 5:  # Turn right
+        elif right_fingers == 3:  # Turn right
             hold_key(Key.right)
             release_key(Key.left)
             action_text += "Right "
