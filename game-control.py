@@ -151,7 +151,7 @@ while True:
         release_key(Key.right)
     
     if hands_detected["Right"] and hands_detected["Left"] and right_fingers is not None and left_fingers is not None:
-        if left_fingers == 5 and right_fingers == 5:
+        if left_fingers == 0 and right_fingers == 0:
             hold_key(Key.esc)
             release_key(Key.esc)
 
