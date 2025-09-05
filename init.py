@@ -4,7 +4,7 @@ from pynput.keyboard import Controller, Key
 import numpy as np
 import autopy
 
-class init:
+class GameCV:
     def __init__(self):
         self.keyboard = Controller()
         self.key = Key

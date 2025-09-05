@@ -1,18 +1,18 @@
-from init import init
+from init import GameCV
 import cv2
 import mediapipe as mp
 import numpy as np
 import autopy
 
-init = init()
+init = GameCV()
 
 while True:
     success, img = init.cap.read()
         
     # Mirror the image for better user experience
-    img = cv2.flip(img, 1)  
-    
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    imgf = cv2.flip(img, 1)
+
+    img_rgb = cv2.cvtColor(imgf, cv2.COLOR_BGR2RGB)
     results = init.hands.process(img_rgb)
 
     # FIXED: Reset finger counts each frame and track which hands are detected
@@ -54,7 +54,7 @@ while True:
                 
                 # Move Mouse
                 autopy.mouse.move(init.wScr - clocX, clocY)
-                # cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
+                cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
                 init.plocX, init.plocY = clocX, clocY
             
             # Both Index and middle fingers are up : Clicking Mode
@@ -64,33 +64,33 @@ while True:
                 # print(length)
                 # Click mouse if distance short
                 if length < 40:
-                    # cv2.circle(img, (lineInfo[4], lineInfo[5]),
-                    #           15, (0, 255, 0), cv2.FILLED)
+                    cv2.circle(img, (lineInfo[4], lineInfo[5]),
+                              15, (0, 255, 0), cv2.FILLED)
                     autopy.mouse.click()
             
             # Left hand finger count and states
             if hand_label == "Left":
                 left_fingers = totalFingers
-                cv2.putText(img, f'Left: {totalFingers} fingers', (50, 50),
+                cv2.putText(imgf, f'Left: {totalFingers} fingers', (50, 50),
                             cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
                 # Show individual finger states
                 finger_states = ''.join(['1' if f else '0' for f in fingers])
-                # cv2.putText(img, f'L fingers: {finger_states}', (50, 80),
-                #             cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
+                cv2.putText(imgf, f'L fingers: {finger_states}', (50, 80),
+                            cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
 
             # Right hand finger count and states
             if hand_label == "Right":
                 right_fingers = totalFingers
-                # cv2.putText(img, f'Right: {totalFingers} fingers', (50, 120),
-                #             cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+                cv2.putText(imgf, f'Right: {totalFingers} fingers', (50, 120),
+                            cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
                 # Show individual finger states
                 finger_states = ''.join(['1' if f else '0' for f in fingers])
-                # cv2.putText(img, f'R fingers: {finger_states}', (50, 150),
-                #             cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 1)
+                cv2.putText(imgf, f'R fingers: {finger_states}', (50, 150),
+                            cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 1)
 
 
 
-    #action_text = ""
+    action_text = ""
     
     # Left hand controls: Forward, Brake, Drift
     if hands_detected["Left"] and left_fingers is not None:
@@ -119,7 +119,7 @@ while True:
         if right_fingers == 2:  # Turn left
             init.hold_key(init.key.left)
             init.release_key(init.key.right)
-            action_text += "Left "
+            action_text += "Left "  
         elif right_fingers == 3:  # Turn right
             init.hold_key(init.key.right)
             init.release_key(init.key.left)
@@ -138,23 +138,29 @@ while True:
         if left_fingers == 0 and right_fingers == 0:
             init.hold_key(init.key.esc)
             init.release_key(init.key.esc)
+        elif left_fingers == 5 and right_fingers == 5:
+            init.hold_key(init.key.space)
+            init.release_key(init.key.space)
+            init.hold_key(init.key.space)
+            init.release_key(init.key.space)
+
 
     # # Display current action
-    # if action_text:
-    #     cv2.putText(img, f'Action: {action_text}', (50, 250),
-    #                 cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+    if action_text:
+        cv2.putText(imgf, f'Action: {action_text}', (50, 250),
+                    cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
 
-    # # Special action when both hands detected
-    # if hands_detected["Left"] and hands_detected["Right"]:
-    #     cv2.putText(img, 'Both Hands Detected', (50, 200),
-    #                 cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
+    # Special action when both hands detected
+    if hands_detected["Left"] and hands_detected["Right"]:
+        cv2.putText(imgf, 'Both Hands Detected', (50, 200),
+                    cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255), 2)
 
-    # # FIXED: Show status when no hands detected
-    # if not hands_detected["Left"] and not hands_detected["Right"]:
-    #     cv2.putText(img, 'No Hands Detected', (50, 200),
-    #                 cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
+    # FIXED: Show status when no hands detected
+    if not hands_detected["Left"] and not hands_detected["Right"]:
+        cv2.putText(imgf, 'No Hands Detected', (50, 200),
+                    cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
 
-    cv2.imshow('Hand Control - Asphalt Legends', img)
+    cv2.imshow('Hand Control - Asphalt Legends', imgf)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
