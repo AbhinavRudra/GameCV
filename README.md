@@ -28,7 +28,7 @@ GameCV is a Python-based project that leverages computer vision to enable gestur
 
 ## Video Demonstration
 
-![Demo Video](demo.mp4)
+![Demo Video](demo-small.mp4)
 
 ## Requirements
 
