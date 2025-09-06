@@ -23,7 +23,7 @@ GameCV is a Python-based project that leverages computer vision to enable gestur
      - 3 fingers: Turn Right
    - **Both Hands**:
      - 0 fingers on both: Pause
-     - 5 fingers on both: Exit
+     - 5 fingers on both: Booster
 3. **Mouse Control**: Single index finger movement controls the mouse cursor, while pinching gestures simulate mouse clicks.
 
 ## Requirements
